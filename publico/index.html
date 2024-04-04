@@ -82,7 +82,7 @@
     margin: 20px auto;
     padding: 20px;
     background-color: #fff;
-    border-radius: 5px;
+    border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -101,7 +101,7 @@
         .pdf-link {
             display: block;
             margin-bottom: 10px;
-            padding: 10px;
+            padding: 5px;
             color: rgb(0, 0, 0);
             text-decoration: none;
             border-radius: 5px;
@@ -246,7 +246,7 @@
     <iframe id="pdfViewer" src="" width="100%" height="100%" frameborder="0"></iframe>
 </div>
 
-<button id="openFirmaPopup">Firma</button>
+
 <!-- Formulario de firma -->
 <div id="pdfForm" style="display: none;">
     <div class="logo">
@@ -277,6 +277,7 @@
 
 <!-- Botones de Cancelar, Siguiente y Firmar -->
 <div id="botones-final">
+    <button id="openFirmaPopup">Firma</button>
     <!-- Contenido omitido por brevedad -->
     <form action="/enviar-correo" method="POST" enctype="multipart/form-data">
         <button type="submit">Enviar Correo</button>

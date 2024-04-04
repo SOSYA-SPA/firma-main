@@ -834,7 +834,9 @@ app.get('/registro', (req, res) => {
 });
 
 
-
+app.get('/ValidacionCorreo', (req, res) => {
+    res.render('ValidacionCorreo'); // Renderizar la vista del formulario de registro
+});
 
 app.post('/ValidacionCorreo', async (req, res) => {
     const { nombres, apellidos, nacionalidad, rut, correo, telefono, direccion, fechanac } = req.body;
