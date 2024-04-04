@@ -240,9 +240,9 @@
 </div>
 
 <!-- Contenedor para mostrar el PDF -->
-<div id="pdfContainer" style="display: none;">
-  
-    <iframe id="pdfViewer" src="" width="100%" height="500px" frameborder="0"></iframe>
+<div id="pdfContainer">
+    <button id="closePdfContainer" style="position: absolute; top: 10px; right: 10px; background-color: transparent; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+    <iframe id="pdfViewer" src="" width="100%" height="100%" frameborder="0"></iframe>
 </div>
 
 
@@ -281,6 +281,12 @@
 
 <div id="message"></div>
 
+<script>
+    // Función para cerrar la ventana emergente del PDF
+    document.getElementById('closePdfContainer').addEventListener('click', () => {
+        document.getElementById('pdfContainer').style.display = 'none';
+    });
+</script>
 <script>
 
     document.addEventListener('DOMContentLoaded', () => {
