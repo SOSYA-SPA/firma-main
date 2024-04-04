@@ -77,42 +77,53 @@
 
         /* Estilos para la lista de archivos PDF */
         #pdfListContainer {
-    width: 100%;
-    max-width:95%; 
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-gap: 20px;
-}
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
 
         #titleContainer {
             text-align: center;
-            grid-column: span 2;
         }
 
-        #titleContainer h2 {
-            margin-top: 0;
+        #titleContainer h2, #titleContainer h6 {
+            margin: 0;
+            color: #333;
         }
 
         .pdf-link {
             display: block;
             margin-bottom: 10px;
-            padding: 5px;
-            color: rgb(0, 0, 0);
-            text-decoration: none;
+            padding: 10px;
+            background-color: #f0f0f0;
             border-radius: 5px;
+            color: #333;
+            text-decoration: none;
             transition: background-color 0.3s ease;
         }
 
         .pdf-link:hover {
-            background-color: #00acd8;
+            background-color: #e0e0e0;
         }
 
-        /* Estilos para el contenedor del PDF */
+        .documentCheckbox {
+            display: block;
+        }
+
+        .pdf-list-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .pdf-list-item label {
+            margin-left: 10px;
+
+
+        } /* Estilos para el contenedor del PDF */
         #pdfContainer {
             position: fixed;
             top: 50%;
@@ -232,13 +243,15 @@
 <h1>Firma de Documentos</h1>
 
 <!-- Lista de archivos PDF -->
-<div id="pdfListContainer">
-    <div id="titleContainer">
-        <h2>Lista de Documentos por Firmar</h2>
-        <h6>Selecciona el documento que quieras revisar antes de firmar</h6>
+ <div id="pdfListContainer">
+        <div id="titleContainer">
+            <h2>Lista de Documentos por Firmar</h2>
+            <h6>Selecciona el documento que quieras revisar antes de firmar</h6>
+        </div>
+        <ol id="pdfList" style="list-style-type: none; padding: 0;">
+            <!-- Los elementos de la lista se generarán dinámicamente aquí -->
+        </ol>
     </div>
-    <ol type="checkbox" class="documentCheckbox" id="pdfList" style="list-style-type: decimal;">
-</div>
 
 <!-- Contenedor para mostrar el PDF -->
 <div id="pdfContainer">
@@ -280,7 +293,7 @@
     <button id="openFirmaPopup">Firma</button>
     <!-- Contenido omitido por brevedad -->
     <form action="/enviar-correo" method="POST" enctype="multipart/form-data">
-        <button type="submit">Enviar Correo</button>
+        <button type="submit" id="enviarCorreoBtn" disabled>Enviar Correo</button>
     </form>
     
 </div>
@@ -479,6 +492,9 @@
 
         if (response.ok) {
             messageDiv.textContent = data.message;
+
+            // Habilitar el botón de envío de correo
+            document.getElementById('enviarCorreoBtn').disabled = false;
         } else {
             messageDiv.textContent = data.error || 'Error al firmar el PDF';
         }
