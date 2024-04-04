@@ -109,7 +109,7 @@
         }
 
         .pdf-link:hover {
-            background-color: #45a049;
+            background-color: #00acd8;
         }
 
         /* Estilos para el contenedor del PDF */
@@ -139,14 +139,15 @@
 
         /* Estilos para el formulario de firma */
         #pdfForm {
-            width: 90%;
-            max-width: 500px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+    width: 90%;
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #00acd8; /* Cambiar color de fondo */
+    color: rgb(255, 255, 255); /* Cambiar color del texto */
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
 
         .form-control {
             margin-bottom: 20px;
@@ -170,8 +171,8 @@
 
         /* Estilos para botones */
         button {
-            background-color: #007bff;
-            color: white;
+            background-color: #ffffff;
+            color: #00acd8;
             padding: 12px 24px;
             border: none;
             border-radius: 15px;
@@ -180,7 +181,7 @@
         }
 
         button:hover {
-            background-color: #45a049;
+            background-color: #5e7a82;
         }
 
         /* Estilos para el mensaje */
@@ -236,7 +237,7 @@
         <h2>Lista de Documentos por Firmar</h2>
         <h6>Selecciona el documento que quieras revisar antes de firmar</h6>
     </div>
-    <ol type="checkbox" lass="documentCheckbox" id="pdfList" style="list-style-type: decimal;">
+    <ol type="checkbox" class="documentCheckbox" id="pdfList" style="list-style-type: decimal;">
 </div>
 
 <!-- Contenedor para mostrar el PDF -->
@@ -245,9 +246,9 @@
     <iframe id="pdfViewer" src="" width="100%" height="100%" frameborder="0"></iframe>
 </div>
 
-
+<button id="openFirmaPopup">Firma</button>
 <!-- Formulario de firma -->
-<div id="pdfForm">
+<div id="pdfForm" style="display: none;">
     <h2>Ingresar Datos de Firma</h2>
     <form id="guardarCorreoForm" action="/guardar-correo" method="POST">
         <div class="form-control">
@@ -264,6 +265,7 @@
         </div>
         <button type="submit" id="convertirFormulario" id="guardarCorreoForm">Crear Firma</button> 
         <button type="button" id="firmarDocumento">Firmar Documento</button>
+        <button id="closepdfForm">Cerrar</button>
         <div id="message"></div>
     </form>
 </div>
@@ -280,6 +282,37 @@
 </div>
 
 <div id="message"></div>
+
+<script>
+
+
+    // Obtén el botón "Firma"
+    const openFirmaPopupBtn = document.getElementById('openFirmaPopup');
+    // Obtén el contenedor de firma
+    const pdfFormContainer = document.getElementById('pdfForm');
+
+  
+    // Agrega un evento al botón "Firma" para mostrar el contenedor de firma en una ventana emergente
+    openFirmaPopupBtn.addEventListener('click', () => {
+        // Muestra el contenedor de firma
+        pdfFormContainer.style.display = 'block';
+        // Establece la posición del contenedor de firma en el centro de la ventana
+        pdfFormContainer.style.top = '50%';
+        pdfFormContainer.style.left = '50%';
+        pdfFormContainer.style.transform = 'translate(-50%, -50%)';
+        // Configura otros estilos de ventana emergente según sea necesario
+        pdfFormContainer.style.position = 'fixed';
+        pdfFormContainer.style.zIndex = '9999';
+        pdfFormContainer.style.backgroundColor = '#00acd8';
+        pdfFormContainer.style.padding = '20px';
+        pdfFormContainer.style.borderRadius = '10px';
+        pdfFormContainer.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.2)';
+        
+    });
+    document.getElementById('closepdfForm').addEventListener('click', () => {
+        document.getElementById('pdfForm').style.display = 'none';
+    });
+</script>
 
 <script>
     // Función para cerrar la ventana emergente del PDF

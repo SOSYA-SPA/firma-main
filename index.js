@@ -834,85 +834,125 @@ app.get('/registro', (req, res) => {
 });
 
 
-app.get('/ValidacionCorreo', (req, res) => {
-    res.render('ValidacionCorreo'); // Renderizar la vista del formulario de registro
-});
 
-
-
-
-
-
-// Endpoint para solicitar nombre, apellido, número de teléfono y correo electrónico
 
 app.post('/ValidacionCorreo', async (req, res) => {
     const { nombres, apellidos, nacionalidad, rut, correo, telefono, direccion, fechanac } = req.body;
-
-    // Obtener la hora de ingreso
-    const fechaIngreso = new Date();
 
     // Verificar si se proporcionaron todos los campos requeridos
     if (!nombres || !apellidos || !nacionalidad || !rut || !correo || !telefono || !direccion || !fechanac) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
-    req.session.datosRegistro = { nombres, correo };
+req.session.datosRegistro = { nombres, correo };
     console.log('Datos registrados:', req.session.datosRegistro);
 
-    // Establecer conexión a la base de datos
-    const pool = await getConnection();
-
     try {
-        // Verificar si se estableció la conexión
-        if (pool) {
-            // Consulta SQL para insertar datos en la tabla *Empleado*
-            const query = `
+        // Establecer conexión a la base de datos
+        const pool = await getConnection();
+
+        // Consulta SQL para verificar si el usuario ya está registrado
+        const checkUserQuery = `
+            SELECT COUNT(*) AS count FROM [dbo].[Empleado] WHERE [Rut] = @rut
+        `;
+        const userResult = await pool.request()
+            .input('rut', sql.VarChar(12), rut)
+            .query(checkUserQuery);
+
+        // Verificar si el usuario ya está registrado
+        if (userResult.recordset[0].count > 0) {
+            // El usuario ya está registrado, proceder con la actualización de datos
+            const updateEmpleadoQuery = `
+                UPDATE [dbo].[Empleado] 
+                SET [Nombres] = @nombres, [Apellidos] = @apellidos, [Nacionalidad] = @nacionalidad, 
+                    [Correo_Personal] = @correo, [Telefono] = @telefono, [Direccion] = @direccion, 
+                    [FechaNacimiento] = @fechanac
+                WHERE [Rut] = @rut
+            `;
+            // Ejecutar la consulta para actualizar los datos del empleado
+            await pool.request()
+                .input('nombres', sql.VarChar(40), nombres)
+                .input('apellidos', sql.VarChar(40), apellidos)
+                .input('nacionalidad', sql.VarChar(40), nacionalidad)
+                .input('correo', sql.VarChar(40), correo)
+                .input('telefono', sql.Numeric(9, 0), telefono)
+                .input('direccion', sql.VarChar(40), direccion)
+                .input('fechanac', sql.DateTime, new Date(fechanac))
+                .input('rut', sql.VarChar(12), rut)
+                .query(updateEmpleadoQuery);
+
+            // Enviar correo electrónico de validación
+            const mailOptions = {
+                from: 'jose.baez@sosya.cl',
+                to: correo,
+                subject: 'Datos Actualizados',
+                text: `¡Tus datos han sido actualizados con éxito!`
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error('Error al enviar el correo de validación:', error);
+                    return res.status(500).json({ error: 'Error al enviar el correo de validación' });
+                } else {
+                    console.log('Correo de validación enviado:', info.response);
+                    return res.status(200).json({ message: 'Tus datos han sido actualizados con éxito' });
+                }
+            });
+        } else {
+            // El usuario no está registrado, proceder con la inserción de datos
+            const queryEmpleado = `
                 INSERT INTO [dbo].[Empleado] ([Nombres], [Apellidos], [Nacionalidad], [Rut], [Correo_Personal], [Telefono], [Direccion], [FechaNacimiento])
                 OUTPUT INSERTED.Empleado_id -- Recuperar el ID del empleado insertado
-                VALUES ('${nombres}', '${apellidos}', '${nacionalidad}', '${rut}', '${correo}', '${telefono}', '${direccion}', '${fechanac}')
+                VALUES (@nombres, @apellidos, @nacionalidad, @rut, @correo, @telefono, @direccion, @fechanac)
             `;
-            // Ejecutar la consulta
-            const result = await pool.request().query(query);
+            // Ejecutar la consulta para insertar empleado
+            const resultEmpleado = await pool.request()
+                .input('nombres', sql.VarChar(40), nombres)
+                .input('apellidos', sql.VarChar(40), apellidos)
+                .input('nacionalidad', sql.VarChar(40), nacionalidad)
+                .input('rut', sql.VarChar(12), rut)
+                .input('correo', sql.VarChar(40), correo)
+                .input('telefono', sql.Numeric(9, 0), telefono)
+                .input('direccion', sql.VarChar(40), direccion)
+                .input('fechanac', sql.DateTime, new Date(fechanac))
+                .query(queryEmpleado);
 
             // Obtener el ID del empleado insertado
-            const empleadoId = result.recordset[0].Empleado_id;
+            const empleadoId = resultEmpleado.recordset[0].Empleado_id;
 
-            // Guardar en el historial
-            const historialQuery = `
+            // Consulta SQL para insertar datos en la tabla Historial
+            const queryHistorial = `
                 INSERT INTO [dbo].[Historial] ([FechaIngreso], [Accion], [Resultado], [Descripcion], [Empleado_id])
-                VALUES ('${fechaIngreso.toISOString()}', 'Ingreso Formulario de Registro', 'Éxito', 'Usuario Registrado ', ${empleadoId})
+                VALUES (GETDATE(), 'Ingreso Formulario de Registro', 'Éxito', 'Usuario Registrado ', @empleadoId)
             `;
-            await pool.request().query(historialQuery);
+            // Ejecutar la consulta para insertar historial
+            await pool.request()
+                .input('empleadoId', sql.Int, empleadoId)
+                .query(queryHistorial);
 
-            // Enviar respuesta de éxito
-            return res.status(200).json({ message: 'Datos validados con éxito, revise su bandeja de entrada en su correo ingresado' });
-        } else {
-            // Si la conexión no se estableció, enviar error
-            return res.status(500).json({ error: 'Error en la conexión a la base de datos' });
+            // Enviar correo electrónico de validación
+            const mailOptions = {
+                from: 'jose.baez@sosya.cl',
+                to: correo,
+                subject: 'Datos Validados',
+                text: `¡Tu información ha sido validada con éxito!`
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error('Error al enviar el correo de validación:', error);
+                    return res.status(500).json({ error: 'Error al enviar el correo de validación' });
+                } else {
+                    console.log('Correo de validación enviado:', info.response);
+                    return res.status(200).json({ message: 'Datos validados con éxito, revise su bandeja de entrada en su correo ingresado' });
+                }
+            });
         }
     } catch (error) {
-        // Si ocurre algún error durante la consulta, enviar error
         console.error('Error al ejecutar la consulta SQL:', error);
         return res.status(500).json({ error: 'Error al ejecutar la consulta SQL' });
-    } finally {
-        // Cerrar la conexión a la base de datos
-        pool.close();
-    // Enviar correo electrónico de validación
-    const mailOptions = {
-        from: 'jose.baez@sosya.cl',
-        to: correo,
-        subject: 'Datos Validados',
-        text: `¡Tu información ha sido validada con éxito!`
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.error('Error al enviar el correo de validación:', error);
-        } else {
-            console.log('Correo de validación enviado:', info.response);
-        }
-    });
-}
+    }
 });
+
 
 // Endpoint para registrar un nuevo usuario
 app.post('/registro', async (req, res) => {
