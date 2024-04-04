@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "nombre": "Yosember",
+    "apellido": "Rodriguez",
+    "telefono": "979985605",
+    "correo": "yosealex09@gmail.com"
+  },
+  {
+    "id": 2,
+    "nombre": "jose",
+    "apellido": "baez",
+    "telefono": "949169410",
+    "correo": "jose.baez@sosya.cl"
+  }
+  
+]

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            color: #ffffff;
+        }
+        form {
+            width: 80%;
+            max-width: 400px;
+            padding: 20px;
+            background-color: #00acd8;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(147, 98, 98, 0.1);
+        }
+        input[type="text"], input[type="email"], input[type="tel"] {
+            width: calc(95% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #000000;
+            border-radius: 4px;
+        }
+        input[type="submit"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            color: #00acd8;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #ffffff;
+        }
+        .message {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    
+    <form id="registroForm" action="/ValidacionCorreo" method="POST">
+        <div class="logo">
+            <img src="/publico/sosya-blanco-200px.png" alt="Logo" width="80" height="30">
+        </div>
+        <h1>Formulario Validación de Datos</h1>
+        <input type="text" id="nombres" name="nombres" placeholder="Nombres" required>
+        <input type="text" id="apellidos" name="apellidos" placeholder="Apellidos" required>
+        <input type="text" id="nacionalidad" name="nacionalidad" placeholder="Nacionalidad" required>
+        <input type="text" id="rut" name="rut" placeholder="Ej: 20.453.456-7" required>
+        <input type="email" id="correo" name="correo" placeholder="Correo Electrónico" required>
+        <input type="tel" id="telefono" name="telefono" placeholder="Telefono" required>
+        <input type="text" id="direccion" name="direccion" placeholder="Dirección" required>
+        <input type="text" id="fechanac" name="fechanac" placeholder="Ej: 02/01/2001" required>
+        <input type="submit" value="Validar Datos">
+        <div id="message" class="message"></div>
+        <div id="error" class="error"></div>
+    </form>
+
+    <script>
+        const registroForm = document.getElementById('registroForm');
+        const messageDiv = document.getElementById('message');
+        const errorDiv = document.getElementById('error');
+
+        registroForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Evitar que el formulario se envíe normalmente
+
+            const formData = new FormData(registroForm);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            try {
+                const response = await fetch('/ValidacionCorreo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    messageDiv.textContent = responseData.message;
+                    messageDiv.style.display = 'block';
+                    errorDiv.style.display = 'none';
+                    registroForm.reset(); // Limpiar el formulario después del registro exitoso
+                    setTimeout(() => {
+                        window.location.href = '/registro';
+                    }, 2000);
+                } else {
+                    const errorMessage = await response.json();
+                    errorDiv.textContent = errorMessage.error;
+                    errorDiv.style.display = 'block';
+                    messageDiv.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = '';
+                errorDiv.style.display = 'block';
+                messageDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

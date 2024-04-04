@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Usuario</title>
+    <style>
+         body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: rgb(202, 197, 190);
+        }
+        .header {
+            background-color: #ffffff;
+            overflow: hidden;
+            padding: 10px;
+        }
+        .logo {
+            float: left;
+            margin-left: 20px;
+            color: white;
+            font-size: 20px;
+        }
+         /* Estilos para el menú desplegable */
+         .dropdown {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 10px;
+            background-color: #ffffff;
+            z-index: 1000; /* Para que esté por encima del contenido */
+            right: 0;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 160px;
+            z-index: 1000; /* Para que esté por encima del contenido */
+            right:  0;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            color: rgb(0, 0, 0);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.3s;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #555;
+        }
+        
+        .logout-btn {
+            color: rgb(0, 0, 0);
+            background-color: #ffffff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            padding: 14px 16px;
+        }
+        .logout-btn:hover {
+            background-color: #c9302c;
+        }
+        .content {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <!-- Logo -->
+        <div class="logo">
+            <img src="publico/sosya-color-130px.png" alt="Logo" width="80" height="30">
+        </div>
+        <!-- Menú -->.
+        <!-- Menú desplegable -->
+    <div class="dropdown">
+        <button class="dropdown-toggle">☰</button>
+        <div class="dropdown-content">
+            <a href="http://localhost:3000/dashboard">Home</a>
+            <a href="http://localhost:3000/perfil">Profile</a>
+            <a href="#settings">Settings</a>
+            <a href="http://localhost:3000/solicitar-codigo">Documentos a Firmar</a>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+            
+    </div>
+</div>
+    <div class="content">
+        <main>
+            <section class="profile-info">
+                <h1>Bienvenido, <%= user.username %></h1>
+                <h2>Información del Perfil</h2>
+                <p><strong>Nombre:</strong> <%= user.nombre %></p>
+                <p><strong>Correo Electrónico:</strong> <%= user.email %></p>
+                <!-- Puedes mostrar más información del perfil aquí -->
+            </section>
+            <section class="profile-actions">
+                <h2>Acciones</h2>
+                <a href="/perfil/editar">Editar Perfil</a>
+                <!-- Puedes agregar más enlaces de acciones según sea necesario -->
+            </section>
+        </main>
+    </div>
+    <footer>
+        <!-- Pie de página -->
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Función para cerrar sesión
+        function logout() {
+            // Aquí puedes agregar el código para cerrar sesión, por ejemplo, redireccionar a la página de inicio de sesión
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+</html>

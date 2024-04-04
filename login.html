@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-image: url('publico/shutterstock_1774527986.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background-color: #00acd8;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            position: relative; /* Asegura que la posición absoluta se base en este contenedor */
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+
+        label {
+            font-size: 16px;
+            color: #ffffff;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            background-color: #ffffff;
+            color: rgb(0,172,216,255);
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #ffffff;
+        }
+
+        #crearCuentaBtn {
+            background-color: #ffffff;
+            color: #00acd8;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button[type="submit"]:hover,
+        #crearCuentaBtn:hover {
+            background-color: #ffffff;
+        }
+
+        #crearCuentaBtn {
+            background-color: #ffffff;
+        }
+
+        #crearCuentaBtn:hover {
+            background-color: #ffffff;
+        }
+
+        /* Estilos para el logo */
+        #logo {
+            position: absolute; /* Posición absoluta para colocar el logo */
+            top: -50px; /* Distancia desde la parte superior */
+            left: 50%; /* Centrar horizontalmente */
+            transform: translateX(-50%); /* Alinear horizontalmente */
+            width: 100px; /* Ancho del logo */
+            height: auto; /* Altura automática para mantener la proporción */
+        }
+
+        /* Estilos para separar los botones */
+        #botones {
+            text-align: center;
+            margin-top: 20px; /* Espacio entre los botones */
+        }
+
+        #botones button {
+            margin-bottom: 10px; /* Espacio entre los botones */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img id="logo" src="publico/sosya-blanco-200px.png" alt="Logo">
+        <h2>Iniciar Sesión</h2>
+        <form id="loginForm">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Iniciar Sesión</button>
+        </form>
+        <div id="botones">
+            <button id="crearCuentaBtn">Crear Cuenta</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (response.ok) {
+                    window.location.href = '/dashboard';
+                } else {
+                    console.error('Error en la autenticación');
+                }
+            } catch (error) {
+                console.error('Error al enviar la solicitud:', error);
+            }
+        });
+        document.getElementById('crearCuentaBtn').addEventListener('click', () => {
+            window.location.href = '/registro'; // Redirigir a la página de creación de cuenta
+        });
+    </script>
+</body>
+</html>

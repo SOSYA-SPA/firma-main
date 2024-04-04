@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertir Base64 a PDF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        #convertButton {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        #convertButton:hover {
+            background-color: #0056b3;
+        }
+
+        #pdfViewer {
+            width: 100%;
+            height: 80vh;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Convertir Base64 a PDF</h1>
+        <label for="fileInput" id="fileInputLabel" style="cursor: pointer;">Selecciona un archivo</label>
+        <!-- Elemento de entrada de archivo -->
+        <input type="file" id="fileInput">
+        <!-- Botón para convertir a PDF -->
+        <button id="convertButton">Convertir a PDF</button>
+        <!-- Visor de PDF -->
+        <iframe id="pdfViewer"></iframe>
+    </div>
+
+    <script>
+        // Espera a que el documento esté completamente cargado
+        document.addEventListener("DOMContentLoaded", function() {
+            // Obtener el botón de conversión y el elemento de entrada de archivo
+            const convertButton = document.getElementById('convertButton');
+            const fileInput = document.getElementById('fileInput');
+            const fileInputLabel = document.getElementById('fileInputLabel');
+            const pdfViewer = document.getElementById('pdfViewer');
+            
+            // Agregar un evento de clic al botón de conversión
+            convertButton.addEventListener('click', function() {
+                // Verificar si se ha seleccionado un archivo
+                if (fileInput.files.length > 0) {
+                    // Obtener el archivo seleccionado
+                    const file = fileInput.files[0];
+                    // Crear un FileReader
+                    const reader = new FileReader();
+                    
+                    // Configurar la función de devolución de llamada al cargar el archivo
+                    reader.onload = function(event) {
+                        // Obtener el contenido base64 del archivo
+                        const base64Data = event.target.result.split(',')[1];
+                        // Mostrar el PDF en el visor
+                        showPDF(base64Data);
+                    };
+                    
+                    // Leer el archivo como base64
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Por favor selecciona un archivo.');
+                }
+            });
+
+            // Función para mostrar el PDF en el visor
+            function showPDF(base64Data) {
+                pdfViewer.src = `data:application/pdf;base64,${base64Data}`;
+            }
+
+            // Mostrar el nombre del archivo seleccionado
+            fileInput.addEventListener('change', function() {
+                fileInputLabel.textContent = fileInput.files[0].name;
+            });
+        });
+    </script>
+</body>
+</html>

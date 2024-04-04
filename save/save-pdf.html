@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardar PDF</title>
+</head>
+<body>
+    <h1>Guardar PDF</h1>
+    <form id="pdfForm">
+        <!-- Aquí colocas tus campos y elementos de entrada -->
+        <input type="file" id="fileInput">
+        <button type="submit">Guardar PDF</button>
+    </form>
+
+    <div id="message"></div>
+    
+    <script>
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const length = binaryString.length;
+            const bytes = new Uint8Array(length);
+
+            for (let i = 0; i < length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+
+            return bytes.buffer;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const pdfForm = document.getElementById('pdfForm');
+            const fileInput = document.getElementById('fileInput');
+            const messageDiv = document.getElementById('message');
+
+            pdfForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+
+                    reader.onload = async function(event) {
+                        const base64Data = event.target.result.split(',')[1];
+                        await savePDFOnServer(base64Data, file.name);
+                    };
+
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Por favor selecciona un archivo.');
+                }
+            });
+        });
+
+        async function savePDFOnServer(base64Data, fileName) {
+            try {
+                const arrayBuffer = base64ToArrayBuffer(base64Data);
+                const response = await fetch('/save-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ arrayBuffer, fileName })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message);
+                } else {
+                    alert(data.error || 'Error al guardar el PDF en el servidor');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al conectar con el servidor');
+            }
+        }
+    </script>
+</body>
+</html>

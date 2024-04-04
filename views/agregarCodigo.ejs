@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Código</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 300px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #verificationResult {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Verificar Código</h1>
+        <form id="verificationForm">
+            <label for="code">Ingrese el código de verificación:</label>
+            <input type="text" id="code" name="code" required>
+            <button type="submit">Validar Código</button>
+        </form>
+        <p id="verificationResult"></p>
+    </div>
+    
+    <script>
+        document.getElementById('verificationForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Evitar el comportamiento predeterminado de enviar el formulario
+            const code = document.getElementById('code').value;
+    
+            if (code.trim() === '') {
+                document.getElementById('verificationResult').textContent = 'Ingrese un código válido';
+                return;
+            }
+    
+            try {
+                const response = await fetch('/verificar-codigo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('verificationResult').textContent = `${data.message}. Correo electrónico: ${data.email}`;
+                    // Redirigir a otra página
+                    window.location.href = '/formulario';
+                } else {
+                    const errorMessage = await response.text();
+                    document.getElementById('verificationResult').textContent = errorMessage || 'Error al validar el código';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('verificationResult').textContent = 'Error al conectar con el servidor';
+            }
+        });
+    </script>
+</body>
+</html>

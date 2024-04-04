@@ -1,0 +1,16 @@
+[
+    {
+      "id": "1",
+      "nombre": " Yosember",
+      "apellido": "Roddriguez",
+      "nacionalidad": "Venezolana",
+      "rut": "27119198-7"
+    },
+    {
+      "id": "2",
+      "nombre": " Pedro",
+      "apellido": "Perez",
+      "nacionalidad": "Chilena",
+      "rut": "12345678-9"
+    }
+  ]
