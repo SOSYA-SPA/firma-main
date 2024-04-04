@@ -414,6 +414,9 @@ let correoYIPemail = "";
 
 // POST /formulario
 app.post('/formulario', async (req, res) => {
+
+
+
     console.log(req.body); // Verificar los datos del formulario recibidos
     const { nombre, rut, email } = req.body;
 
@@ -611,9 +614,7 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-app.get('/dashboard', (req, res) => {
-    res.sendFile(__dirname + '/dashboard.html');
-});
+
 
 
 
@@ -966,15 +967,42 @@ app.post('/registro', async (req, res) => {
         // Obtener el pool de conexión
         const pool = await getConnection();
 
+        // Consulta SQL para verificar si el correo ya está registrado
+        const queryCheckCorreo = `
+            SELECT COUNT(*) AS count FROM [dbo].[Usuario] WHERE [Correo] = '${correo}'
+        `;
+
+        // Ejecutar la consulta SQL para verificar si el correo ya está registrado
+        const resultCheckCorreo = await pool.request().query(queryCheckCorreo);
+        const correoRegistrado = resultCheckCorreo.recordset[0].count > 0;
+
+        // Si el correo ya está registrado, enviar un mensaje de error
+        if (correoRegistrado) {
+            return res.status(400).send('El correo ya está registrado');
+        }
+
         // Consulta SQL para insertar el nuevo usuario en la base de datos
-        const query = `
+        const queryInsertUsuario = `
             INSERT INTO [dbo].[Usuario] ([Nombre_Usuario], [Contraseña], [Correo])
             VALUES ('${nombre}', '${password}', '${correo}')
         `;
 
         // Ejecutar la consulta SQL para insertar el usuario
-        const result = await pool.request().query(query);
-        console.log('Nuevo usuario registrado en la base de datos:', result);
+        const resultInsertUsuario = await pool.request().query(queryInsertUsuario);
+        console.log('Nuevo usuario registrado en la base de datos:', resultInsertUsuario);
+
+        // Consulta SQL para vincular al usuario con el empleado
+        const queryVincularUsuarioEmpleado = `
+            UPDATE Usuario
+            SET Usuario.Empleado_id = Empleado.Empleado_id
+            FROM Usuario
+            INNER JOIN Empleado ON Usuario.Correo = Empleado.Correo_Personal
+            WHERE Usuario.Correo = '${correo}';
+        `;
+
+        // Ejecutar la consulta SQL para vincular al usuario con el empleado
+        const resultVincularUsuarioEmpleado = await pool.request().query(queryVincularUsuarioEmpleado);
+        console.log('Usuario vinculado al empleado:', resultVincularUsuarioEmpleado);
 
         // Eliminar los datos de la sesión
         delete req.session.datosRegistro;
@@ -984,6 +1012,45 @@ app.post('/registro', async (req, res) => {
         console.error('Error al registrar el nuevo usuario en la base de datos:', error);
         res.status(500).send('Error interno del servidor');
     }
+});
+
+
+app.get('/dashboard', (req, res) => { 
+    if (!req.session.user) {
+        // Si el usuario no está autenticado, redirigirlo al inicio de sesión
+        return res.redirect('/login');
+    } else {
+        // Renderizar el panel de control y pasar la variable user
+        res.render('dashboard', { user: req.session.user });
+    }
+});
+
+
+// La ruta POST en /dashboard es para manejar datos del formulario en el panel de control
+app.post('/dashboard', (req, res) => { 
+     // Verificar si el usuario está autenticado
+     if (!req.session.user) {
+        // Si el usuario no está autenticado, redirigirlo al inicio de sesión
+        return res.redirect('/login');
+    }
+
+    // Supongamos que estás utilizando algún middleware para parsear el cuerpo de la solicitud
+    const { nombre, email, newPassword } = req.body;
+
+    // Aquí podrías realizar la lógica para actualizar el perfil del usuario en la base de datos
+    // Por simplicidad, aquí solo mostraremos los datos recibidos en la consola
+    console.log('Datos del perfil actualizados:');
+    console.log('Nombre de usuario:', nombre);
+    console.log('Correo electrónico:', email);
+    console.log('Nueva contraseña:', newPassword);
+
+    // Actualizar los datos del usuario en la sesión
+    req.session.user.username = nombre;
+    req.session.user.email = email;
+
+    // Redirigir al usuario de nuevo a la página de perfil
+    res.redirect('/perfil');
+
 });
 
 
