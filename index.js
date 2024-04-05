@@ -835,11 +835,11 @@ app.get('/registro', (req, res) => {
 });
 
 
-app.get('/ValidacionCorreo', (req, res) => {
-    res.render('ValidacionCorreo'); // Renderizar la vista del formulario de registro
+app.get('/IngresoDatos', (req, res) => {
+    res.render('IngresoDatos'); // Renderizar la vista del formulario de registro
 });
 
-app.post('/ValidacionCorreo', async (req, res) => {
+app.post('/IngresoDatos', async (req, res) => {
     const { nombres, apellidos, nacionalidad, rut, correo, telefono, direccion, fechanac } = req.body;
 
     // Verificar si se proporcionaron todos los campos requeridos

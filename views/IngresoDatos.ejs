@@ -67,7 +67,7 @@
 </head>
 <body>
     
-    <form id="registroForm" action="/ValidacionCorreo" method="POST">
+    <form id="registroForm" action="/IngresoDatos" method="POST">
         <div class="logo">
             <img src="/publico/sosya-blanco-200px.png" alt="Logo" width="80" height="30">
         </div>
@@ -100,7 +100,7 @@
             });
 
             try {
-                const response = await fetch('/ValidacionCorreo', {
+                const response = await fetch('/IngresoDatos', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
