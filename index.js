@@ -190,7 +190,7 @@ app.post('/enviar_correoSA', async (req, res) => {
             from: 'jose.baez@sosya.cl',
             to: destinatarios.join(', '), // Unir las direcciones de correo con comas
             subject: 'Asunto del correo',
-            text: 'Ingrese al link para validar sus datos : http://localhost:3000/ValidacionCorreo',
+            text: 'Ingrese al link para validar sus datos : http://localhost:3000/IngresoDatos',
             bcc: 'alexyose09@gmail.com'
         };
 
