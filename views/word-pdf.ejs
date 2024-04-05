@@ -1,29 +1,67 @@
 <!DOCTYPE html>
+
+
 <html>
-<head>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        #fileList {
-            margin-top: 1em;
-        }
-    </style>
-</head>
-<body>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+        <style>
+            .loading-screen {
+                position: fixed;
+                z-index: 9999;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+    
+            .loading-text {
+                color: white;
+                font-size: 2em;
+            }
+    
+            .d-none {
+                display: none;
+            }
+        </style>
+    </head>
+    <body class="bg-light">
+    
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h2 class="mb-4 text-center">Selecciona los archivos Word para convertir a PDF</h2>
+        
+                    <form action="/upload" method="post" enctype="multipart/form-data" class="mb-4">
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="wordFiles" name="wordFiles" accept=".doc,.docx" multiple>
+                            <label class="custom-file-label" for="wordFiles">Elegir archivos</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Subir</button>
+                    </form>
+        
+                    <h3 class="mb-3">Archivos seleccionados:</h3>
+                    <ul id="fileList" class="list-group"></ul>
+        
+                    <h3 class="mt-5 mb-3">PDF Convertido:</h3>
+                    <embed id="pdfViewer" src="" type="application/pdf" width="100%" height="600px" class="border rounded" />
+                </div>
+            </div>
+        </div>
+        
+        <div id="loadingScreen" class="loading-screen d-none">
+            <div class="loading-text">Transformando documento...</div>
+            <div class="progress">
+                <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
 
-<h2>Selecciona los archivos Word para convertir a PDF</h2>
-
-<form action="/word-pdf" method="post" enctype="multipart/form-data">
-  <input type="file" id="wordFiles" name="wordFiles" accept=".doc,.docx" multiple>
-  <input type="submit">
-</form>
-
-<h3>Archivos seleccionados:</h3>
-<ul id="fileList"></ul>
-
-<h3>PDF Convertido:</h3>
-<embed id="pdfViewer" src="" type="application/pdf" width="100%" height="600px" />
+        <div id="successMessage" class="alert alert-success d-none">
+            Documento transformado a PDF con éxito.
+        </div>
 
 <script>
     const form = document.querySelector('form');
@@ -32,19 +70,51 @@
 
         const formData = new FormData(form);
 
-        fetch('/word-pdf', {
-    method: 'POST',
-    body: formData
-}).then(response => response.json())
-  .then(data => {
-    if (data.pdfFiles && data.pdfFiles.length > 0) {
-        // Actualizar el visor de PDF con la nueva ruta del archivo PDF
-        document.getElementById('pdfViewer').src = "/doc_convertidos/" + data.pdfFiles[0];
+        // Mostrar la pantalla de carga
+    const loadingScreen = document.getElementById('loadingScreen');
+    loadingScreen.classList.remove('d-none');
+
+    // Iniciar la transformación del documento
+    const request = new XMLHttpRequest();
+    request.open('POST', '/upload', true);
+    request.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = (e.loaded / e.total) * 100 + '%';
+            progressBar.setAttribute('aria-valuenow', (e.loaded / e.total) * 100);
+        }
+    };
+    request.onload = function() {
+    if (request.status >= 200 && request.status < 400) {
+        // Ocultar la pantalla de carga
+        loadingScreen.classList.add('d-none');
+
+        // Mostrar el PDF convertido
+        const data = JSON.parse(request.responseText);
+        const pdfViewer = document.getElementById('pdfViewer');
+        pdfViewer.src = data.pdfUrl;
+
+        // Mostrar el mensaje de éxito
+        const successMessage = document.getElementById('successMessage');
+        successMessage.classList.remove('d-none');
     } else {
-        console.log('No se pudo obtener la ruta del archivo PDF. Verifique si la conversión se realizó correctamente.');
+        // Ocultar la pantalla de carga en caso de error
+        loadingScreen.classList.add('d-none');
+
+        console.error('Error:', request.status);
     }
-    })
-  });
+};
+    request.onerror = function() {
+        // Ocultar la pantalla de carga en caso de error
+        loadingScreen.classList.add('d-none');
+
+        console.error('Error:', request.status);
+    };
+    request.send(formData);
+});
+    // Mostrar el mensaje de éxito
+    const successMessage = document.getElementById('successMessage');
+    successMessage.classList.remove('d-none');
 
     document.getElementById('wordFiles').addEventListener('change', function(e) {
         const fileList = document.getElementById('fileList');

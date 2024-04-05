@@ -308,6 +308,8 @@ app.post('/enviar-correo', async (req, res) => {
             
             // Enviar respuesta de éxito
             res.send('Correo enviado correctamente');
+            
+            
         } catch (error) {
             console.error('Error al enviar el correo:', error);
             res.status(500).send('Error al enviar el correo');
