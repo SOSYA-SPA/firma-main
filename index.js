@@ -13,18 +13,27 @@ import session from 'express-session';
 import { getConnection } from  './database/connection.js';
 import os from 'os';
 import sql from 'mssql'
+import libre from 'libreoffice-convert'
 
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = 3000;
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+
+
 const validationCodes = new Map();
 
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/')
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+});
 
-
+const upload = multer({ storage: storage });
 app.use(session({
     secret: 'tu secreto aquí',
     resave: false,
@@ -33,8 +42,6 @@ app.use(session({
         maxAge: 60 * 1000 // 1 minuto
     }
 }));
-
-
 
 
 // Configurar EJS como motor de vista
@@ -784,16 +791,45 @@ app.get('/lista-pdf', (req, res) => {
 
 
 
-app.get('/perfil', (req, res) => {
-    // Verificar si el usuario está autenticado
-    if (!req.session.user) {
-        // Si el usuario no está autenticado, redirigirlo al inicio de sesión
-        return res.redirect('/login');
-    }
+// GET /perfil: Renderizar la vista del perfil del usuario
+app.get('/perfil', async (req, res) => {
+    try {
+        // Verificar si el usuario está autenticado
+        if (!req.session.user) {
+            // Si el usuario no está autenticado, redirigirlo al inicio de sesión
+            return res.redirect('/login');
+        }
 
-    // Renderizar la vista del perfil y pasar los datos del usuario a la plantilla
-    res.render('perfil', { user: req.session.user });
+        // Establecer conexión a la base de datos
+        const pool = await getConnection();
+
+        // Consulta SQL para obtener los datos del perfil del usuario
+        const query = `
+            SELECT U.*, E.Nombres AS NombresEmpleado, E.Apellidos AS ApellidosEmpleado, E.Nacionalidad AS NacionalidadEmpleado,
+                   E.Rut AS RutEmpleado, E.Correo_Personal AS CorreoPersonalEmpleado, E.Telefono AS TelefonoEmpleado,
+                   E.Direccion AS DireccionEmpleado, E.FechaNacimiento AS FechaNacimientoEmpleado
+            FROM Usuario U
+            INNER JOIN Empleado E ON U.Empleado_id = E.Empleado_id
+            WHERE U.Usuario_id = @userId`;
+        const request = pool.request();
+        request.input('userId', sql.Int, req.session.user.id);
+
+        // Ejecutar la consulta SQL
+        const result = await request.query(query);
+
+        // Verificar si se encontraron datos del usuario
+        if (result.recordset.length === 0) {
+            return res.status(404).send('Usuario no encontrado');
+        }
+
+        // Renderizar la vista del perfil y pasar los datos del usuario a la plantilla
+        res.render('perfil', { user: result.recordset[0] });
+    } catch (error) {
+        console.error('Error al obtener el perfil del usuario:', error);
+        res.status(500).send('Error interno del servidor');
+    }
 });
+
 
 app.post('/perfil', (req, res) => {
     // Verificar si el usuario está autenticado
@@ -1052,6 +1088,34 @@ app.post('/dashboard', (req, res) => {
     res.redirect('/perfil');
 
 });
+const pdfDir = path.join(__dirname, '/publico');
+
+app.get('/word-pdf', function (req, res) {
+    res.render('word-pdf');
+});
+
+app.post('/word-pdf', upload.array('wordFiles'), (req, res) => {
+    let pdfFiles = [];
+    req.files.forEach(file => {
+        const wordPath = file.path;
+        const pdfPath = path.join(pdfDir, file.originalname.replace('.docx', '.pdf'));
+
+        const wordFile = fs.readFileSync(wordPath);
+        libre.convert(wordFile, '.pdf', undefined, (err, done) => {
+            if (err) {
+                console.log(`Error converting file: ${file.originalname}`, err);
+            } else {
+                fs.writeFileSync(pdfPath, done);
+                console.log(`Conversion completed successfully: ${file.originalname}`);
+                pdfFiles.push('/publico/' + file.originalname.replace('.docx', '.pdf')); // Agregar la ruta del archivo PDF a la lista
+            }
+        });
+    });
+
+    // Enviar la lista de archivos PDF al cliente
+    res.json({ message: 'Los archivos se están convirtiendo. Verifica la consola del servidor para actualizaciones de estado.', pdfFiles: pdfFiles });
+});
+
 
 
 // Puerto en el que se ejecutará el servidor

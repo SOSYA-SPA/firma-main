@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #fileList {
+            margin-top: 1em;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Selecciona los archivos Word para convertir a PDF</h2>
+
+<form action="/word-pdf" method="post" enctype="multipart/form-data">
+  <input type="file" id="wordFiles" name="wordFiles" accept=".doc,.docx" multiple>
+  <input type="submit">
+</form>
+
+<h3>Archivos seleccionados:</h3>
+<ul id="fileList"></ul>
+
+<h3>PDF Convertido:</h3>
+<embed id="pdfViewer" src="" type="application/pdf" width="100%" height="600px" />
+
+<script>
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        fetch('/word-pdf', {
+    method: 'POST',
+    body: formData
+}).then(response => response.json())
+  .then(data => {
+    if (data.pdfFiles && data.pdfFiles.length > 0) {
+        // Actualizar el visor de PDF con la nueva ruta del archivo PDF
+        document.getElementById('pdfViewer').src = "/doc_convertidos/" + data.pdfFiles[0];
+    } else {
+        console.log('No se pudo obtener la ruta del archivo PDF. Verifique si la conversión se realizó correctamente.');
+    }
+    })
+  });
+
+    document.getElementById('wordFiles').addEventListener('change', function(e) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+        for (let i = 0; i < e.target.files.length; i++) {
+            const li = document.createElement('li');
+            li.textContent = e.target.files[i].name;
+            fileList.appendChild(li);
+        }
+    });
+</script>
+
+</body>
+</html>
