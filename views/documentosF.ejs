@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Documentos Disponibles</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -71,6 +71,43 @@
         }
         .content {
             padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            background-color: #ffffff;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .container {
+            padding: 20px;
             width: 80%; /* Ancho del contenedor */
             margin: 0 auto; /* Centrar el contenedor */
             background-color: #ffffff; /* Color de fondo del contenedor */
@@ -78,15 +115,29 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra */
             margin-top: 50px; /* Espacio desde arriba */
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
+
     <div class="header">
         <!-- Logo -->
         <div class="logo">
             <img src="publico/sosya-color-130px.png" alt="Logo" width="80" height="30">
         </div>
-        <!-- Menú -->.
+        <!-- Menú -->
         <!-- Menú desplegable -->
         <div class="dropdown">
             <button class="dropdown-toggle">☰</button>
@@ -97,33 +148,54 @@
                 <a href="http://localhost:3000/solicitar-codigo">Documentos a Firmar</a>
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
+            </div>
         </div>
     </div>
-    
-    <div class="content">
-        <h2>Firma Digital</h2>
-        <h1>Bienvenido, <%= user.username %></h1>
-        <p> <%= user.nombre %></p>
 
-        <!-- Aquí puedes mostrar el contenido del dashboard -->
+    <div class="container">
+        <h1>Documentos</h1>
+
+        <!-- Verifica si user está definido antes de acceder a sus propiedades -->
+        <% if (user) { %>
+            <!-- Agrega más campos según tus necesidades -->
+             <table>
+                <tr>
+                    <th>Nombre Usuario</th>
+                    <th>Apellido Usuario</th>
+                    <th>Rut</th>
+                    <th>Documento</th>
+                    <th>Acciones</th>
+                </tr>
+                <% documentos.forEach(documento => { %>
+                    <tr>
+                        <td><%= user.NombresEmpleado %></td>
+                        <td><%= user.ApellidosEmpleado %></td>
+                        <td><%= user.RutEmpleado %></td>
+                        <td><%= documento %></a></td>
+                                             <td>
+                            <form action="/documentos/<%= documento %>" method="POST">
+                                <button type="submit">Descargar</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </table>
+        <% } %>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        // Función para obtener el nombre de usuario y mostrar el mensaje de bienvenida
-        $(document).ready(function() {
-            // Simulación de obtener el nombre de usuario, puedes modificar esta parte según tu sistema de autenticación
-            var userName = " "; // Aquí deberías obtener el nombre de usuario desde tu sistema de autenticación
-            
-            // Mostrar el mensaje de bienvenida con el nombre de usuario
-            $("#welcome-message").text("Bienvenido " + userName + "!");
-        });
-
-        // Función para cerrar sesión
-        function logout() {
-            // Aquí puedes agregar el código para cerrar sesión, por ejemplo, redireccionar a la página de inicio de sesión
-            window.location.href = '/login';
-        }
-    </script>
 </body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+<script>
+
+
+    // Función para cerrar sesión
+    function logout() {
+        // Aquí puedes agregar el código para cerrar sesión, por ejemplo, redireccionar a la página de inicio de sesión
+        window.location.href = '/login';
+    }
+
+    
+</script>
 </html>
+

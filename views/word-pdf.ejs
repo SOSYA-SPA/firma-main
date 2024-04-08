@@ -26,28 +26,35 @@
             .d-none {
                 display: none;
             }
+            body {
+            background: url('/publico/shutterstock_1774527986.jpg') no-repeat center center fixed; 
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
+        }
         </style>
     </head>
     <body class="bg-light">
-    
         <div class="container py-5">
-            <div class="row">
+            <div class="row justify-content-center">
                 <div class="col-lg-8 mx-auto">
-                    <h2 class="mb-4 text-center">Selecciona los archivos Word para convertir a PDF</h2>
-        
-                    <form action="/upload" method="post" enctype="multipart/form-data" class="mb-4">
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="wordFiles" name="wordFiles" accept=".doc,.docx" multiple>
-                            <label class="custom-file-label" for="wordFiles">Elegir archivos</label>
+                    <img src="/publico/sosya-blanco-200px.png" alt="Logo" style="position: absolute; top: -50px; left: -350px; z-index: 100; width: 300px;">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h2 class="mb-4 text-center">Selecciona los archivos Word para convertir a PDF</h2>
+                            <form action="/word-pdf" method="post" enctype="multipart/form-data" class="mb-4">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="wordFiles" name="wordFiles" accept=".doc,.docx" multiple>
+                                    <label class="custom-file-label" for="wordFiles">Elegir archivos</label>
+                                </div>
+                                <button type="submit" class="btn btn-primary mt-3">Subir</button>
+                            </form>
+                            <h3 class="mb-3">Archivos seleccionados:</h3>
+                            <ul id="fileList" class="list-group"></ul>
+                            
                         </div>
-                        <button type="submit" class="btn btn-primary mt-3">Subir</button>
-                    </form>
-        
-                    <h3 class="mb-3">Archivos seleccionados:</h3>
-                    <ul id="fileList" class="list-group"></ul>
-        
-                    <h3 class="mt-5 mb-3">PDF Convertido:</h3>
-                    <embed id="pdfViewer" src="" type="application/pdf" width="100%" height="600px" class="border rounded" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -59,73 +66,68 @@
             </div>
         </div>
 
-        <div id="successMessage" class="alert alert-success d-none">
-            Documento transformado a PDF con éxito.
-        </div>
+        
 
-<script>
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+            <script>
+                const form = document.querySelector('form');
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
 
-        const formData = new FormData(form);
+                    const formData = new FormData(form);
 
-        // Mostrar la pantalla de carga
-    const loadingScreen = document.getElementById('loadingScreen');
-    loadingScreen.classList.remove('d-none');
+                    // Mostrar la pantalla de carga
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.classList.remove('d-none');
 
-    // Iniciar la transformación del documento
-    const request = new XMLHttpRequest();
-    request.open('POST', '/upload', true);
-    request.upload.onprogress = function(e) {
-        if (e.lengthComputable) {
-            const progressBar = document.getElementById('progressBar');
-            progressBar.style.width = (e.loaded / e.total) * 100 + '%';
-            progressBar.setAttribute('aria-valuenow', (e.loaded / e.total) * 100);
-        }
-    };
-    request.onload = function() {
-    if (request.status >= 200 && request.status < 400) {
-        // Ocultar la pantalla de carga
-        loadingScreen.classList.add('d-none');
+                // Iniciar la transformación del documento
+                const request = new XMLHttpRequest();
+                request.open('POST', '/upload', true);
+                request.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const progressBar = document.getElementById('progressBar');
+                        progressBar.style.width = (e.loaded / e.total) * 100 + '%';
+                        progressBar.setAttribute('aria-valuenow', (e.loaded / e.total) * 100);
+                    }
+                };
+                request.onload = function() {
+                if (request.status >= 200 && request.status < 400) {
+                    // Ocultar la pantalla de carga
+                    loadingScreen.classList.add('d-none');
 
-        // Mostrar el PDF convertido
-        const data = JSON.parse(request.responseText);
-        const pdfViewer = document.getElementById('pdfViewer');
-        pdfViewer.src = data.pdfUrl;
+                    // Mostrar el PDF convertido
+                    const data = JSON.parse(request.responseText);
+                    const pdfViewer = document.getElementById('pdfViewer');
+                    pdfViewer.src = data.pdfUrl;
 
-        // Mostrar el mensaje de éxito
-        const successMessage = document.getElementById('successMessage');
-        successMessage.classList.remove('d-none');
-    } else {
-        // Ocultar la pantalla de carga en caso de error
-        loadingScreen.classList.add('d-none');
+                    // Mostrar el mensaje de éxito
+                    const successMessage = document.getElementById('successMessage');
+                    successMessage.classList.remove('d-none');
+                } else {
+                    // Ocultar la pantalla de carga en caso de error
+                    loadingScreen.classList.add('d-none');
 
-        console.error('Error:', request.status);
-    }
-};
-    request.onerror = function() {
-        // Ocultar la pantalla de carga en caso de error
-        loadingScreen.classList.add('d-none');
+                    console.error('Error:', request.status);
+                }
+            };
+                request.onerror = function() {
+                    // Ocultar la pantalla de carga en caso de error
+                    loadingScreen.classList.add('d-none');
 
-        console.error('Error:', request.status);
-    };
-    request.send(formData);
-});
-    // Mostrar el mensaje de éxito
-    const successMessage = document.getElementById('successMessage');
-    successMessage.classList.remove('d-none');
-
-    document.getElementById('wordFiles').addEventListener('change', function(e) {
-        const fileList = document.getElementById('fileList');
-        fileList.innerHTML = '';
-        for (let i = 0; i < e.target.files.length; i++) {
-            const li = document.createElement('li');
-            li.textContent = e.target.files[i].name;
-            fileList.appendChild(li);
-        }
-    });
-</script>
+                    console.error('Error:', request.status);
+                };
+                request.send(formData);
+            });
+                // Mostrar el mensaje de éxito
+                document.getElementById('wordFiles').addEventListener('change', function(e) {
+                    const fileList = document.getElementById('fileList');
+                    fileList.innerHTML = '';
+                    for (let i = 0; i < e.target.files.length; i++) {
+                        const li = document.createElement('li');
+                        li.textContent = e.target.files[i].name;
+                        fileList.appendChild(li);
+                    }
+                });
+            </script>
 
 </body>
 </html>

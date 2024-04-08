@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil de Usuario</title>
     <style>
-        body {
+       body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -22,8 +22,8 @@
             color: white;
             font-size: 20px;
         }
-         /* Estilos para el menú desplegable */
-         .dropdown {
+        /* Estilos para el menú desplegable */
+        .dropdown {
             position: fixed;
             top: 0;
             right: 0;
@@ -71,6 +71,12 @@
         }
         .content {
             padding: 20px;
+            width: 80%; /* Ancho del contenedor */
+            margin: 0 auto; /* Centrar el contenedor */
+            background-color: #ffffff; /* Color de fondo del contenedor */
+            border-radius: 10px; /* Borde redondeado */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra */
+            margin-top: 50px; /* Espacio desde arriba */
         }
     </style>
 </head>
@@ -84,12 +90,13 @@
         <!-- Menú desplegable -->
     <div class="dropdown">
         <button class="dropdown-toggle">☰</button>
-        <div class="dropdown-content">
-            <a href="http://localhost:3000/dashboard">Home</a>
-            <a href="http://localhost:3000/perfil">Profile</a>
-            <a href="http://localhost:3000/solicitar-codigo">Documentos a Firmar</a>
-            <button class="logout-btn" onclick="logout()">Logout</button>
-        </div>
+            <div class="dropdown-content">
+                <a href="http://localhost:3000/dashboard">Home</a>
+                <a href="http://localhost:3000/perfil">Profile</a>
+                <a href="http://localhost:3000/documentos">Documentos</a>
+                <a href="http://localhost:3000/solicitar-codigo">Documentos a Firmar</a>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
     </div>
             
     </div>

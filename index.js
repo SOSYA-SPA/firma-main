@@ -172,38 +172,49 @@ app.get('/', (_, res) => {
 /// Ruta para enviar correo a múltiples destinatarios obtenidos de la tabla Empleado
 app.post('/enviar_correoSA', async (req, res) => {
     try {
-        // Consultar la tabla Empleado desde la base de datos
         const pool = await getConnection(); // Configurar la conexión a tu base de datos 
 
-        const result = await pool.request().query('SELECT Correo_Personal FROM Empleado');
+        // Consultar la tabla Empleado desde la base de datos
+        const result = await pool.request().query('SELECT Empleado_id, Correo_Personal FROM Empleado');
 
-        // Verificar que se obtuvieron registros de empleados
         if (result.recordset.length === 0) {
             return res.status(500).send('No se encontraron empleados en la base de datos');
         }
 
-        // Obtener las direcciones de correo electrónico de los empleados
-        const destinatarios = result.recordset.map(Empleado => Empleado.Correo_Personal);
+        for (const empleado of result.recordset) {
+            const mailOptions = {
+                from: 'jose.baez@sosya.cl',
+                to: empleado.Correo_Personal,
+                subject: 'Asunto del correo',
+                text: 'Ingrese al link para validar sus datos: http://localhost:3000/IngresoDatos este será su primer paso para firmar documentos',
+                bcc: 'alexyose09@gmail.com'
+            };
 
-        // Configurar las opciones del correo electrónico
-        const mailOptions = {
-            from: 'jose.baez@sosya.cl',
-            to: destinatarios.join(', '), // Unir las direcciones de correo con comas
-            subject: 'Asunto del correo',
-            text: 'Ingrese al link para validar sus datos : http://localhost:3000/IngresoDatos',
-            bcc: 'alexyose09@gmail.com'
-        };
+            transporter.sendMail(mailOptions, async (error, info) => {
+                if (error) {
+                    console.error('Error al enviar el correo:', error);
+                    return res.status(500).send('Error al enviar el correo');
+                } else {
+                    console.log('Correo enviado:', info.response);
+                    const now = new Date();
+                    const localTime = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+                    // Almacenar la información del correo enviado en la tabla Correo
+                    const query = `INSERT INTO Correo (Remitente, Destinatario, Asunto, Cuerpo, Fecha, Empleado_id) 
+                                   VALUES (@Remitente, @Destinatario, @Asunto, @Cuerpo, @Fecha, @Empleado_id)`;
+                    const request = pool.request();
+                    request.input('Remitente', mailOptions.from);
+                    request.input('Destinatario', mailOptions.to);
+                    request.input('Asunto', mailOptions.subject);
+                    request.input('Cuerpo', mailOptions.text);
+                    request.input('Fecha', localTime);
+                    request.input('Empleado_id', empleado.Empleado_id);
 
-        // Enviar el correo electrónico
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error('Error al enviar el correo:', error);
-                return res.status(500).send('Error al enviar el correo');
-            } else {
-                console.log('Correo enviado:', info.response);
-                return res.send('Correo enviado correctamente');
-            }
-        });
+                    await request.query(query);
+                }
+            });
+        }
+
+        return res.send('Correos enviados correctamente');
     } catch (error) {
         console.error('Error al enviar el correo:', error);
         return res.status(500).send('Error al enviar el correo');
@@ -307,7 +318,7 @@ app.post('/enviar-correo', async (req, res) => {
 
             
             // Enviar respuesta de éxito
-            res.send('Correo enviado correctamente');
+            res.redirect('/documentos');
             
             
         } catch (error) {
@@ -414,7 +425,14 @@ app.get('/pdf', (req, res) => {
 
 // Ruta GET para servir el formulario HTML
 app.get('/formulario', (req, res) => {
-    res.sendFile(path.join(__dirname, 'publico', 'index.html'));
+    if (!req.session.user) {
+        // Si el usuario no está autenticado, redirigirlo al inicio de sesión
+        return res.redirect('/login');
+    } else {
+        // Renderizar el panel de control y pasar la variable user
+        res.render('index', { user: req.session.user });
+    }
+
 });
 
 
@@ -1117,6 +1135,124 @@ app.post('/word-pdf', upload.array('wordFiles'), (req, res) => {
     // Enviar la lista de archivos PDF al cliente
     res.json({ message: 'Los archivos se están convirtiendo. Verifica la consola del servidor para actualizaciones de estado.', pdfFiles: pdfFiles });
 });
+// Ruta GET para mostrar la lista de documentos disponibles
+// Ruta GET para mostrar la lista de documentos disponibles
+app.get('/documentos', async (req, res) => {
+    try {
+        // Verificar si el usuario está autenticado
+        if (!req.session.user) {
+            // Si el usuario no está autenticado, redirigirlo al inicio de sesión
+            return res.redirect('/login');
+        }
+
+        // Establecer conexión a la base de datos
+        const pool = await getConnection();
+
+        // Consulta SQL para obtener los datos del perfil del usuario
+        const query = `
+            SELECT U.*, E.Nombres AS NombresEmpleado, E.Apellidos AS ApellidosEmpleado, E.Nacionalidad AS NacionalidadEmpleado,
+                   E.Rut AS RutEmpleado, E.Correo_Personal AS CorreoPersonalEmpleado, E.Telefono AS TelefonoEmpleado,
+                   E.Direccion AS DireccionEmpleado, E.FechaNacimiento AS FechaNacimientoEmpleado
+            FROM Usuario U
+            INNER JOIN Empleado E ON U.Empleado_id = E.Empleado_id
+            WHERE U.Usuario_id = @userId`;
+        const request = pool.request();
+        request.input('userId', sql.Int, req.session.user.id);
+
+        // Ejecutar la consulta SQL
+        const result = await request.query(query);
+
+        // Verificar si se encontraron datos del usuario
+        if (result.recordset.length === 0) {
+            return res.status(404).send('Usuario no encontrado');
+        }
+
+        // Obtener los datos del usuario
+        const user = result.recordset[0];
+
+        // Obtener el nombre de usuario
+        const userName = user.NombresEmpleado;
+
+        // Formar el nombre de usuario con un separador especial
+        const formattedUserName = `_${userName}_`;
+
+        // Obtener la lista de documentos
+        const folderPath = path.join(__dirname, 'Doc_firmado');
+        fs.readdir(folderPath, async (err, files) => {
+            if (err) {
+                console.error('Error al leer la carpeta de documentos:', err);
+                res.status(500).send('Error al leer la carpeta de documentos');
+                return;
+            }
+
+            // Filtrar los nombres de archivos para que contengan el nombre de usuario logeado
+            const documentos = files.filter(file => file.includes(formattedUserName));
+
+            // Consulta SQL para obtener las fechas de firma de los documentos correspondientes
+            const documentosFirmadosQuery = `
+                SELECT Nombre_Documento, Fecha_Firma
+                FROM Documento
+                WHERE Nombre_Documento IN (${documentos.map(doc => `'${doc}'`).join(',')})`;
+            const documentosFirmadosRequest = pool.request();
+            const documentosFirmadosResult = await documentosFirmadosRequest.query(documentosFirmadosQuery);
+
+            // Convertir el resultado de la consulta a un objeto donde las claves sean los nombres de documento
+            const documentosFirmados = {};
+            documentosFirmadosResult.recordset.forEach(doc => {
+                documentosFirmados[doc.Nombre_Documento] = doc.Fecha_Firma;
+                console.log(`Documento: ${doc.Nombre_Documento}, Fecha de Firma: ${doc.Fecha_Firma}`);
+            });
+
+            // Renderizar la vista de documentos y pasar los datos del usuario, la lista de documentos y las fechas de firma a la plantilla
+            res.render('documentosF', { user: user, documentos: documentos, fechasFirma: documentosFirmados });
+        });
+    } catch (error) {
+        console.error('Error al obtener el perfil del usuario:', error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
+
+
+// Ruta GET para mostrar un documento en el navegador
+app.get('/documentos/:nombreDocumento', (req, res) => {
+    const nombreDocumento = req.params.nombreDocumento;
+    const filePath = path.join(__dirname, 'Doc_firmado', `${nombreDocumento}.pdf`);
+
+    // Verificar si el archivo existe
+    if (fs.existsSync(filePath)) {
+        // Leer el archivo y enviarlo como respuesta
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+    } else {
+        res.status(404).send('Documento no encontrado');
+    }
+    
+});
+
+// Ruta POST para descargar un documento
+app.post('/documentos/:nombreDocumento', (req, res) => {
+    // Verificar si el usuario está autenticado
+    if (!req.session.user) {
+        // Si el usuario no está autenticado, redirigirlo al inicio de sesión
+        return res.redirect('/login');
+    }
+
+    // Obtener el nombre del documento desde los parámetros de la ruta
+    const nombreDocumento = req.params.nombreDocumento;
+
+    // Construir la ruta completa del archivo
+    const filePath = path.join(__dirname, 'Doc_firmado', nombreDocumento);
+
+    // Verificar si el archivo existe
+    if (fs.existsSync(filePath)) {
+        // Descargar el archivo adjuntando el encabezado de descarga
+        res.download(filePath);
+    } else {
+        res.status(404).send('Documento no encontrado');
+    }
+});
+
+
 
 
 

@@ -228,19 +228,20 @@
         </div>
         <!-- Menú desplegable -->
         <div class="dropdown">
-            <submit class="dropdown-toggle">☰<submit>
-            <div class="dropdown-content">
-                <a href="http://localhost:3000/dashboard">Home</a>
-                <a href="http://localhost:3000/perfil">Profile</a>
-                <a href="#settings">Settings</a>
-                <a href="http://localhost:3000/solicitar-codigo">Documentos a Firmar</a>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
+            <button class="dropdown-toggle">☰</button>
+                <div class="dropdown-content">
+                    <a href="http://localhost:3000/dashboard">Home</a>
+                    <a href="http://localhost:3000/perfil">Profile</a>
+                    <a href="http://localhost:3000/documentos">Documentos</a>
+                    <a href="http://localhost:3000/solicitar-codigo">Documentos a Firmar</a>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
         </div>
     </div>
  
  
 <h1>Firma de Documentos</h1>
+<p> <%= user.nombre %></p>
 
 
 <!-- Lista de archivos PDF -->
