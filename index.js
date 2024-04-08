@@ -1113,30 +1113,80 @@ const pdfDir = path.join(__dirname, '/publico');
 app.get('/word-pdf', function (req, res) {
     res.render('word-pdf');
 });
+//codigo que permitae poder convertir mas documentos word a pdf
+app.post('/word-pdf', function(req, res) {
+    let wordFiles = req.files.wordFiles;
+    if (!Array.isArray(wordFiles)) {
+        wordFiles = [wordFiles];
+    }
 
-app.post('/word-pdf', upload.array('wordFiles'), (req, res) => {
+    wordFiles.forEach(file => {
+        let pdfDoc = officegen('pdf');
+
+        fs.readFile(file.path, function(err, content) {
+            let docx = officegen('docx');
+            docx.on('finalize', function(written) {
+                console.log('Finish to create Word file.\nTotal bytes created: ' + written + '\n');
+            });
+
+            docx.on('error', function(err) {
+                console.log(err);
+            });
+
+            let pObj = docx.createP();
+            pObj.addText(content);
+
+            let out = fs.createWriteStream('example.pdf');
+            out.on('error', function(err) {
+                console.log(err);
+            });
+
+            pdfDoc.generate(out);
+        });
+    });
+
+    res.redirect('/');
+});
+
+app.post('/upload', upload.array('wordFiles'), (req, res) => {
     let pdfFiles = [];
-    req.files.forEach(file => {
-        const wordPath = file.path;
-        const pdfPath = path.join(pdfDir, file.originalname.replace('.docx', '.pdf'));
+    let conversions = req.files.map(file => {
+        return new Promise((resolve, reject) => {
+            const wordPath = file.path;
+            const pdfPath = path.join(pdfDir, file.originalname.replace('.docx', '.pdf'));
 
-        const wordFile = fs.readFileSync(wordPath);
-        libre.convert(wordFile, '.pdf', undefined, (err, done) => {
-            if (err) {
-                console.log(`Error converting file: ${file.originalname}`, err);
-            } else {
-                fs.writeFileSync(pdfPath, done);
-                console.log(`Conversion completed successfully: ${file.originalname}`);
-                pdfFiles.push('/publico/' + file.originalname.replace('.docx', '.pdf')); // Agregar la ruta del archivo PDF a la lista
+            try {
+                const wordFile = fs.readFileSync(wordPath);
+                libre.convert(wordFile, '.pdf', undefined, (err, done) => {
+                    if (err) {
+                        console.log(`Error converting file: ${file.originalname}`, err);
+                        reject(err);
+                    } else {
+                        fs.writeFileSync(pdfPath, done);
+                        console.log(`Conversion completed successfully: ${file.originalname}`);
+                        pdfFiles.push('/publico/' + file.originalname.replace('.docx', '.pdf')); // Agregar la ruta del archivo PDF a la lista
+                        resolve();
+                    }
+                });
+            } catch (err) {
+                console.log(`Error reading file: ${file.originalname}`, err);
+                reject(err);
             }
         });
     });
 
-    // Enviar la lista de archivos PDF al cliente
-    res.json({ message: 'Los archivos se están convirtiendo. Verifica la consola del servidor para actualizaciones de estado.', pdfFiles: pdfFiles });
+    Promise.all(conversions)
+        .then(() => {
+            // Todos los archivos se han convertido con éxito
+            res.json({ message: 'Documentos convertidos con éxito', pdfFiles: pdfFiles });
+        })
+        .catch(err => {
+            // Hubo un error al convertir al menos uno de los archivos
+            res.json({ message: 'Hubo un error al convertir los documentos', error: err });
+        });
 });
-// Ruta GET para mostrar la lista de documentos disponibles
-// Ruta GET para mostrar la lista de documentos disponibles
+
+
 app.get('/documentos', async (req, res) => {
     try {
         // Verificar si el usuario está autenticado
@@ -1170,11 +1220,8 @@ app.get('/documentos', async (req, res) => {
         // Obtener los datos del usuario
         const user = result.recordset[0];
 
-        // Obtener el nombre de usuario
-        const userName = user.NombresEmpleado;
-
-        // Formar el nombre de usuario con un separador especial
-        const formattedUserName = `_${userName}_`;
+        // Obtener el nombre completo del usuario (nombre y apellido)
+        const userName = `${user.NombresEmpleado} ${user.ApellidosEmpleado}`;
 
         // Obtener la lista de documentos
         const folderPath = path.join(__dirname, 'Doc_firmado');
@@ -1185,8 +1232,8 @@ app.get('/documentos', async (req, res) => {
                 return;
             }
 
-            // Filtrar los nombres de archivos para que contengan el nombre de usuario logeado
-            const documentos = files.filter(file => file.includes(formattedUserName));
+            // Filtrar los nombres de archivos para que contengan el nombre completo del usuario logeado
+            const documentos = files.filter(file => file.includes(userName));
 
             // Consulta SQL para obtener las fechas de firma de los documentos correspondientes
             const documentosFirmadosQuery = `
@@ -1211,7 +1258,6 @@ app.get('/documentos', async (req, res) => {
         res.status(500).send('Error interno del servidor');
     }
 });
-
 
 // Ruta GET para mostrar un documento en el navegador
 app.get('/documentos/:nombreDocumento', (req, res) => {

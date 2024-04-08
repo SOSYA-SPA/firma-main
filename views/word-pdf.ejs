@@ -39,16 +39,16 @@
         <div class="container py-5">
             <div class="row justify-content-center">
                 <div class="col-lg-8 mx-auto">
-                    <img src="/publico/sosya-blanco-200px.png" alt="Logo" style="position: absolute; top: -50px; left: -350px; z-index: 100; width: 300px;">
+                    <img src="publico\sosya-color-130px.png" alt="Logo" style="position: absolute; top: -50px; left: -350px; z-index: 100; width: 200px;">
                     <div class="card bg-info text-white">
                         <div class="card-body">
                             <h2 class="mb-4 text-center">Selecciona los archivos Word para convertir a PDF</h2>
                             <form action="/word-pdf" method="post" enctype="multipart/form-data" class="mb-4">
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input" id="wordFiles" name="wordFiles" accept=".doc,.docx" multiple>
-                                    <label class="custom-file-label" for="wordFiles">Elegir archivos</label>
+                                    <label class="custom-file-label" for="wordFiles">Elegir documentos</label>
                                 </div>
-                                <button type="submit" class="btn btn-primary mt-3">Subir</button>
+                                <button type="submit" class="btn btn-primary mt-3">convertir</button>
                             </form>
                             <h3 class="mb-3">Archivos seleccionados:</h3>
                             <ul id="fileList" class="list-group"></ul>
@@ -64,21 +64,25 @@
             <div class="progress">
                 <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
-        </div>
+        </div>0
+        <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
         
 
-            <script>
-                const form = document.querySelector('form');
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-
-                    const formData = new FormData(form);
-
-                    // Mostrar la pantalla de carga
+        <script>
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+        
+                const formData = new FormData(form);
+        
+                // Mostrar la pantalla de carga
                 const loadingScreen = document.getElementById('loadingScreen');
                 loadingScreen.classList.remove('d-none');
-
+        
+                // Mostrar el mensaje de "por favor espere"
+                swal("Por favor espere...", "Estamos transformando sus documentos.", "info");
+        
                 // Iniciar la transformación del documento
                 const request = new XMLHttpRequest();
                 request.open('POST', '/upload', true);
@@ -90,44 +94,72 @@
                     }
                 };
                 request.onload = function() {
-                if (request.status >= 200 && request.status < 400) {
-                    // Ocultar la pantalla de carga
-                    loadingScreen.classList.add('d-none');
+                    if (request.status >= 200 && request.status < 400) {
+                        // Ocultar la pantalla de carga
+                        loadingScreen.classList.add('d-none');
 
-                    // Mostrar el PDF convertido
-                    const data = JSON.parse(request.responseText);
-                    const pdfViewer = document.getElementById('pdfViewer');
-                    pdfViewer.src = data.pdfUrl;
+                        /*// Mostrar el PDF convertido
+                        const data = JSON.parse(request.responseText);
+                        const pdfViewer = document.getElementById('pdfViewer');
+                        pdfViewer.src = data.pdfUrl;
+                        */
+                        // Mostrar el mensaje de éxito
+                        console.log('Mostrando mensaje de éxito'); // Agregar esta línea
+                        swal("¡Éxito!", "Documentos convertidos con éxito.", "success");
 
-                    // Mostrar el mensaje de éxito
-                    const successMessage = document.getElementById('successMessage');
-                    successMessage.classList.remove('d-none');
-                } else {
-                    // Ocultar la pantalla de carga en caso de error
-                    loadingScreen.classList.add('d-none');
+                        const successMessage = document.getElementById('successMessage');
+                        successMessage.classList.remove('d-none');
+                    } else {
+                        // Ocultar la pantalla de carga en caso de error
+                        loadingScreen.classList.add('d-none');
 
-                    console.error('Error:', request.status);
-                }
-            };
+                        // Mostrar un mensaje de error
+                        swal("¡Error!", "Hubo un error al convertir los documentos.", "error");
+
+                        console.error('Error:', request.status);
+                    }
+                };
                 request.onerror = function() {
                     // Ocultar la pantalla de carga en caso de error
                     loadingScreen.classList.add('d-none');
-
+        
+                    // Mostrar un mensaje de error
+                    swal("¡Error!", "Hubo un error al convertir los documentos.", "error");
+        
                     console.error('Error:', request.status);
                 };
                 request.send(formData);
             });
-                // Mostrar el mensaje de éxito
-                document.getElementById('wordFiles').addEventListener('change', function(e) {
-                    const fileList = document.getElementById('fileList');
-                    fileList.innerHTML = '';
-                    for (let i = 0; i < e.target.files.length; i++) {
-                        const li = document.createElement('li');
-                        li.textContent = e.target.files[i].name;
-                        fileList.appendChild(li);
-                    }
-                });
-            </script>
+        
+            let selectedFiles = [];
+            document.getElementById('wordFiles').addEventListener('change', function(e) {
+                for (let i = 0; i < e.target.files.length; i++) {
+                    selectedFiles.push(e.target.files[i]);
+                }
+        
+                updateFileList();
+            });
+        
+            function updateFileList() {
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '';
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const li = document.createElement('li');
+                    li.textContent = selectedFiles[i].name;
+        
+                    const removeButton = document.createElement('button');
+                    removeButton.textContent = 'Eliminar';
+                    removeButton.classList.add('btn', 'btn-danger'); // Agregar clases de Bootstrap
+                    removeButton.addEventListener('click', function() {
+                        selectedFiles.splice(i, 1);
+                        updateFileList();
+                    });
+        
+                    li.appendChild(removeButton);
+                    fileList.appendChild(li);
+                }
+            }
+        </script>
 
 </body>
 </html>
