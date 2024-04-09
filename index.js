@@ -39,7 +39,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: {
-        maxAge: 60 * 1000 // 1 minuto
+        maxAge: 7 * 60 * 1000 // 7 minutos
     }
 }));
 
@@ -336,7 +336,8 @@ const documentosFiltrados = files.filter(file => {
             const info = await transporter.sendMail(mailOptions);
             console.log('Correo enviado con documentos adjuntos:', info.response);
 
-            // Enviar respuesta de éxito
+          
+            // Redirigir al usuario a la página de documentos
             res.redirect('/documentos');
         });
     } catch (error) {
@@ -1252,6 +1253,13 @@ app.get('/documentos', async (req, res) => {
             // Filtrar los nombres de archivos para que contengan el nombre completo del usuario logeado
             const documentos = files.filter(file => file.includes(userName));
 
+// Verificar si no hay documentos para mostrar
+if (documentos.length === 0) {
+    // Renderizar la vista de documentos con una lista vacía de documentos
+    res.render('documentosF', { user: user, documentos: [], fechasFirma: {} });
+    return;
+}
+
             // Consulta SQL para obtener las fechas de firma de los documentos correspondientes
             const documentosFirmadosQuery = `
                 SELECT Nombre_Documento, Fecha_Firma
@@ -1266,6 +1274,8 @@ app.get('/documentos', async (req, res) => {
                 documentosFirmados[doc.Nombre_Documento] = doc.Fecha_Firma;
                 console.log(`Documento: ${doc.Nombre_Documento}, Fecha de Firma: ${doc.Fecha_Firma}`);
             });
+
+            
 
             // Renderizar la vista de documentos y pasar los datos del usuario, la lista de documentos y las fechas de firma a la plantilla
             res.render('documentosF', { user: user, documentos: documentos, fechasFirma: documentosFirmados });
