@@ -253,26 +253,29 @@ app.post('/guardar-correo', (req, res) => {
     // Almacenar el correo y la IP en la sesión
     req.session.correoYIP.email = correoYIPemail;
     req.session.correoYIP.ip = ip;
+    req.session.correoYIP.nombreFormulario = nombreFormulario;
 
-    console.log(`Correo guardado correctamente: ${req.session.correoYIP.email}`);
+
+    console.log(`Correo guardado correctamente: ${req.session.correoYIP.email}, ${req.session.correoYIP.nombreFormulario}`);
     res.send('Correo guardado correctamente');
 });
 
-// POST /enviar-correo
 app.post('/enviar-correo', async (req, res) => {
-    
-    // Obtener el correo y la IP almacenados en la sesión
-    const email = req.session.correoYIP.email;
-    const ip = req.session.correoYIP.ip;
+    // Obtener el correo, la IP y el nombre del formulario almacenados en la sesión
+    const email = req.session.correoYIP && req.session.correoYIP.email;
+    const ip = req.session.correoYIP && req.session.correoYIP.ip;
+    const nombreFormulario = req.session.correoYIP && req.session.correoYIP.nombreFormulario;
 
-    if (!email || !ip) {
-        return res.status(400).send('No se ha guardado ningún correo previamente.');
+    // Verificar si se ha guardado un correo electrónico previamente en la sesión
+    if (!email || !ip || !nombreFormulario) {
+        return res.status(400).send('No se han guardado los datos necesarios previamente.');
     }
-    
-    // Obtener los datos del formulario
+
+
+    // Obtener los datos del formulario (asunto y mensaje)
     const { asunto, mensaje } = req.body;
 
-    // Comprobar si la dirección IP coincide
+    // Comprobar si la dirección IP coincide con la dirección IP local
     const localIpAddress = getLocalIpAddress();
     if (localIpAddress !== ip) {
         return res.status(400).send('La dirección IP no coincide.');
@@ -282,28 +285,45 @@ app.post('/enviar-correo', async (req, res) => {
     console.log('Para:', email);
     console.log('Asunto:', asunto);
     console.log('Mensaje:', mensaje);
+    console.log('Nombre del formulario:', nombreFormulario);
 
     // Ruta de la carpeta que contiene los documentos firmados
     const folderPath = path.join(__dirname, 'Doc_firmado');
 
-    // Leer los archivos de la carpeta y enviarlos como adjuntos en el correo electrónico
-    fs.readdir(folderPath, async (err, files) => {
-        if (err) {
-            console.error('Error al leer la carpeta de documentos firmados:', err);
-            res.status(500).send('Error al leer la carpeta de documentos firmados');
-            return;
-        }
+    try {
+        // Leer los archivos de la carpeta
+        fs.readdir(folderPath, async (err, files) => {
+            if (err) {
+                console.error('Error al leer la carpeta de documentos:', err);
+                return res.status(500).send('Error al leer la carpeta de documentos');
+            }
 
-        console.log('Archivos encontrados en la carpeta de documentos firmados:', files);
+            console.log('Archivos encontrados en la carpeta de documentos:', files);
 
-        try {
+            // Filtrar los archivos cuyo nombre contiene el nombre del formulario
+const documentosFiltrados = files.filter(file => {
+    // Dividir el nombre del archivo en partes utilizando el carácter "_"
+    const parts = file.split('_');
+
+    // Obtener el nombre del formulario del archivo
+    const nombreFormArchivo = parts[1];
+
+    // Comparar el nombre del formulario del archivo con el nombre del formulario proporcionado
+    return nombreFormArchivo === nombreFormulario;
+});
+
+
+            // Verificar si se encontraron documentos para adjuntar
+            if (documentosFiltrados.length === 0) {
+                return res.status(400).json({ error: 'No se encontraron documentos para adjuntar.' });
+            }
             // Configurar las opciones del correo electrónico
             const mailOptions = {
                 from: 'jose.baez@sosya.cl',
                 to: email,
-                subject: 'Documentos Firmados',
-                html: `<p>${mensaje}</p><p>Adjunto encontrarás el archivo: ContratoFirmado.pdf</p>`,
-                attachments: files.map(file => ({
+                subject: asunto,
+                html: `<p>${mensaje}</p><p>Adjunto encontrarás los documentos relacionados con tu correo electrónico</p>`,
+                attachments: documentosFiltrados.map(file => ({
                     filename: file,
                     path: path.join(folderPath, file)
                 })),
@@ -312,20 +332,17 @@ app.post('/enviar-correo', async (req, res) => {
 
             console.log('Opciones del correo electrónico:', mailOptions);
 
-            // Enviar el correo electrónico
+            // Enviar el correo electrónico con los documentos adjuntos
             const info = await transporter.sendMail(mailOptions);
-            console.log('Correo enviado:', info.response);
+            console.log('Correo enviado con documentos adjuntos:', info.response);
 
-            
             // Enviar respuesta de éxito
             res.redirect('/documentos');
-            
-            
-        } catch (error) {
-            console.error('Error al enviar el correo:', error);
-            res.status(500).send('Error al enviar el correo');
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Error al procesar la solicitud:', error);
+        res.status(500).send('Error interno del servidor al procesar la solicitud');
+    }
 });
 
 
