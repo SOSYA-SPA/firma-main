@@ -1238,8 +1238,8 @@ app.get('/documentos', async (req, res) => {
         // Obtener los datos del usuario
         const user = result.recordset[0];
 
-        // Obtener el nombre completo del usuario (nombre y apellido)
-        const userName = `${user.NombresEmpleado} ${user.ApellidosEmpleado}`;
+        // Obtener el nombre completo del usuario (nombre y apellido) y normalizarlo
+const userName = `${user.NombresEmpleado} ${user.ApellidosEmpleado}`.toLowerCase().trim();
 
         // Obtener la lista de documentos
         const folderPath = path.join(__dirname, 'Doc_firmado');
@@ -1250,8 +1250,8 @@ app.get('/documentos', async (req, res) => {
                 return;
             }
 
-            // Filtrar los nombres de archivos para que contengan el nombre completo del usuario logeado
-            const documentos = files.filter(file => file.includes(userName));
+            /// Obtener la lista de documentos y normalizar sus nombres
+const documentos = files.filter(file => file.toLowerCase().includes(userName));
 
 // Verificar si no hay documentos para mostrar
 if (documentos.length === 0) {
