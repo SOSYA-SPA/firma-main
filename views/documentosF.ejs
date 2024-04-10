@@ -135,7 +135,7 @@
     <div class="header">
         <!-- Logo -->
         <div class="logo">
-            <img src="publico/sosya-color-130px.png" alt="Logo" width="80" height="30">
+            <img src="/publico/imagenes/sosya-color-130px.png" alt="Logo" width="80" height="30">
         </div>
         <!-- Menú -->
         <!-- Menú desplegable -->
@@ -158,7 +158,8 @@
         <!-- Verifica si user está definido antes de acceder a sus propiedades -->
         <% if (user) { %>
             <!-- Agrega más campos según tus necesidades -->
-             <table>
+            <h2>Documentos Firmados</h2>
+            <table>
                 <tr>
                     <th>Nombre Usuario</th>
                     <th>Apellido Usuario</th>
@@ -166,16 +167,38 @@
                     <th>Documento</th>
                     <th>Acciones</th>
                 </tr>
-                <% documentos.forEach(documento => { %>
+                <% documentosFirmados.forEach(documento => { %>
                     <tr>
                         <td><%= user.NombresEmpleado %></td>
                         <td><%= user.ApellidosEmpleado %></td>
                         <td><%= user.RutEmpleado %></td>
                         <td><%= documento %></a></td>
-                                             <td>
+                        <td>
                             <form action="/documentos/<%= documento %>" method="POST">
                                 <button type="submit">Descargar</button>
                             </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </table>
+
+            <h2>Documentos por Firmar</h2>
+            <table>
+                <tr>
+                    <th>Nombre Usuario</th>
+                    <th>Apellido Usuario</th>
+                    <th>Rut</th>
+                    <th>Documento</th>
+                    <th>Acciones</th>
+                </tr>
+                <% documentosPorFirmar.forEach(documento => { %>
+                    <tr>
+                        <td><%= user.NombresEmpleado %></td>
+                        <td><%= user.ApellidosEmpleado %></td>
+                        <td><%= user.RutEmpleado %></td>
+                        <td><%= documento %></a></td>
+                        <td>
+                            <a href="http://localhost:3000/solicitar-codigo">Firmar</a>
                         </td>
                     </tr>
                 <% }) %>
@@ -198,4 +221,3 @@
     
 </script>
 </html>
-

@@ -1204,7 +1204,6 @@ app.post('/upload', upload.array('wordFiles'), (req, res) => {
         });
 });
 
-
 app.get('/documentos', async (req, res) => {
     try {
         // Verificar si el usuario está autenticado
@@ -1238,47 +1237,66 @@ app.get('/documentos', async (req, res) => {
         // Obtener los datos del usuario
         const user = result.recordset[0];
 
-        // Obtener el nombre completo del usuario (nombre y apellido) y normalizarlo
-const userName = `${user.NombresEmpleado} ${user.ApellidosEmpleado}`.toLowerCase().trim();
+        // Función para extraer el nombre del usuario de un documento firmado
+        const extractUserName = fileName => fileName.split('_')[1];
 
-        // Obtener la lista de documentos
-        const folderPath = path.join(__dirname, 'Doc_firmado');
-        fs.readdir(folderPath, async (err, files) => {
-            if (err) {
-                console.error('Error al leer la carpeta de documentos:', err);
-                res.status(500).send('Error al leer la carpeta de documentos');
+        // Obtener la lista de archivos en la carpeta de documentos firmados
+        const folderPathFirmados = path.join(__dirname, 'Doc_firmado');
+        fs.readdir(folderPathFirmados, async (errFirmados, filesFirmados) => {
+            if (errFirmados) {
+                console.error('Error al leer la carpeta de documentos firmados:', errFirmados);
+                res.status(500).send('Error al leer la carpeta de documentos firmados');
                 return;
             }
 
-            /// Obtener la lista de documentos y normalizar sus nombres
-const documentos = files.filter(file => file.toLowerCase().includes(userName));
+            // Obtener el nombre completo del usuario (nombre y apellido) y normalizarlo
+            const userName = `${user.NombresEmpleado} ${user.ApellidosEmpleado}`.toLowerCase().trim();
 
-// Verificar si no hay documentos para mostrar
-if (documentos.length === 0) {
-    // Renderizar la vista de documentos con una lista vacía de documentos
-    res.render('documentosF', { user: user, documentos: [], fechasFirma: {} });
-    return;
-}
-
-            // Consulta SQL para obtener las fechas de firma de los documentos correspondientes
-            const documentosFirmadosQuery = `
-                SELECT Nombre_Documento, Fecha_Firma
-                FROM Documento
-                WHERE Nombre_Documento IN (${documentos.map(doc => `'${doc}'`).join(',')})`;
-            const documentosFirmadosRequest = pool.request();
-            const documentosFirmadosResult = await documentosFirmadosRequest.query(documentosFirmadosQuery);
-
-            // Convertir el resultado de la consulta a un objeto donde las claves sean los nombres de documento
-            const documentosFirmados = {};
-            documentosFirmadosResult.recordset.forEach(doc => {
-                documentosFirmados[doc.Nombre_Documento] = doc.Fecha_Firma;
-                console.log(`Documento: ${doc.Nombre_Documento}, Fecha de Firma: ${doc.Fecha_Firma}`);
+            // Filtrar los documentos firmados con el nombre de usuario
+            const documentosFirmados = filesFirmados.filter(fileFirmado => {
+                const userNameFromFileName = extractUserName(fileFirmado.replace('_Firmado.pdf', ''));
+                return userNameFromFileName.toLowerCase() === userName;
             });
 
-            
+            // Obtener la lista de archivos en la carpeta de documentos sin firmar
+            const folderPathSinFirmar = path.join(__dirname, 'Publico');
+            fs.readdir(folderPathSinFirmar, async (errSinFirmar, filesSinFirmar) => {
+                if (errSinFirmar) {
+                    console.error('Error al leer la carpeta de documentos sin firmar:', errSinFirmar);
+                    res.status(500).send('Error al leer la carpeta de documentos sin firmar');
+                    return;
+                }
 
-            // Renderizar la vista de documentos y pasar los datos del usuario, la lista de documentos y las fechas de firma a la plantilla
-            res.render('documentosF', { user: user, documentos: documentos, fechasFirma: documentosFirmados });
+                // Filtrar los nombres de los archivos para obtener los documentos por firmar
+const documentosPorFirmar = filesSinFirmar.filter(fileSinFirmar => {
+// Verificar si el archivo tiene la extensión .pdf
+if (!fileSinFirmar.toLowerCase().endsWith('.pdf')) {
+    return false; // Si no es un archivo PDF, lo excluimos
+}
+
+
+
+    // Extraer el nombre del documento sin la extensión .pdf
+    const nombreDocumentoSinFirma = fileSinFirmar.replace('.pdf', '');
+
+    // Verificar si hay algún documento firmado que coincida exactamente con el nombre del documento sin firma
+    const documentoNoFirmadoEncontrado = !documentosFirmados.some(documentoFirmado => {
+        // Extraer el nombre del documento firmado sin la extensión .pdf
+        const nombreDocumentoFirmado = documentoFirmado.replace('_Firmado.pdf', '');
+
+         // Verificar si el nombre del documento firmado incluye una parte del nombre del documento sin firma
+         return nombreDocumentoFirmado.includes(nombreDocumentoSinFirma);
+        
+    });
+
+    // Retornar verdadero si no se encontró un documento firmado para el documento sin firma actual
+    return documentoNoFirmadoEncontrado;
+});
+
+                // Renderizar la vista de documentos y pasar los datos del usuario, la lista de documentos firmados y los documentos por firmar a la plantilla
+res.render('documentosF', { user: user, documentosFirmados: documentosFirmados, documentosPorFirmar: documentosPorFirmar });
+
+            });
         });
     } catch (error) {
         console.error('Error al obtener el perfil del usuario:', error);
