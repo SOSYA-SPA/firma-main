@@ -656,7 +656,7 @@ let empleados = [];
 
 
 app.get('/login', (req, res) => {
-    res.render('solicitarCodigo'); 
+    res.render('login'); 
 });
 
 
